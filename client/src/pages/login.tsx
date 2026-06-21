@@ -1,68 +1,81 @@
-import { useState } from "react";
-
 import { useNavigate } from "react-router-dom";
+
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+import { toast } from "sonner";
 
 import { authApi } from "@/api/auth.api";
 
 import { useAuth } from "@/context/auth-context";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
+import { loginSchema, type LoginFormValues } from "@/schemas/auth.schema";
 
 export default function LoginPage() {
   const navigate = useNavigate();
 
   const { login } = useAuth();
 
-  const [email, setEmail] = useState("");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+  });
 
-  const [password, setPassword] = useState("");
-
-  const [loading, setLoading] = useState(false);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-
+  async function onSubmit(values: LoginFormValues) {
     try {
-      setLoading(true);
-
-      const { data } = await authApi.login({
-        email,
-        password,
-      });
+      const { data } = await authApi.login(values);
 
       login(data.token, data.user);
+
+      toast.success("Logged in successfully");
+
       navigate("/");
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
+    } catch {
+      toast.error("Invalid credentials");
     }
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
-        <input
-          type="email"
-          placeholder="Email"
-          className="w-full rounded border p-2"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+      <div className="w-full max-w-md rounded-lg border p-6">
+        <h1 className="mb-6 text-2xl font-bold">Login</h1>
 
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full rounded border p-2"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <Input type="email" placeholder="Email" {...register("email")} />
 
-        <button
-          disabled={loading}
-          className="w-full rounded bg-black p-2 text-white"
-        >
-          {loading ? "Logging in..." : "Login"}
-        </button>
-      </form>
+            {errors.email && (
+              <p className="mt-1 text-sm text-red-500">
+                {errors.email.message}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <Input
+              type="password"
+              placeholder="Password"
+              {...register("password")}
+            />
+
+            {errors.password && (
+              <p className="mt-1 text-sm text-red-500">
+                {errors.password.message}
+              </p>
+            )}
+          </div>
+
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Logging in..." : "Login"}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }
