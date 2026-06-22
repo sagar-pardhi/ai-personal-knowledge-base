@@ -1,9 +1,7 @@
 import { prisma } from "../../lib/prisma.js";
+import { storage } from "../../storage/index.js";
 
-import { LocalStorage } from "../../storage/local-storage.js";
 import { AppError } from "../../utils/app-error.js";
-
-const storage = new LocalStorage();
 
 export async function uploadDocument(
   knowledgeBaseId: string,

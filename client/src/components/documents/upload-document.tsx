@@ -6,6 +6,8 @@ interface Props {
   knowledgeBaseId: string;
 }
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
 export function UploadDocument({ knowledgeBaseId }: Props) {
   const uploadMutation = useUploadDocument();
 
@@ -13,6 +15,11 @@ export function UploadDocument({ knowledgeBaseId }: Props) {
     const file = event.target.files?.[0];
 
     if (!file) {
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("File must be less than 10MB");
       return;
     }
 
