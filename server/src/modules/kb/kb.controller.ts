@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 
 import * as kbService from "./kb.service.js";
 
+import * as documentService from "../documents/documents.service.js";
+
 interface Params {
   id: string;
 }
