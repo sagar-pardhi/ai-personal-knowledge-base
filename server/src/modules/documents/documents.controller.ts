@@ -24,3 +24,9 @@ export async function getDocumentsHandler(req: Request, res: Response) {
 
   res.json(documents);
 }
+
+export async function deleteDocumentHandler(req: Request, res: Response) {
+  const result = await documentService.deleteDocument(req.params.id as string);
+
+  res.json(result);
+}

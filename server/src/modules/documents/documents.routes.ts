@@ -5,6 +5,7 @@ import { upload } from "../../config/multer.js";
 import { authMiddleware } from "../../middleware/auth.middleware.js";
 
 import {
+  deleteDocumentHandler,
   getDocumentsHandler,
   uploadDocumentHandler,
 } from "./documents.controller.js";
@@ -21,5 +22,7 @@ router.post(
 );
 
 router.get("/kb/:kbId", asyncHandler(getDocumentsHandler));
+
+router.delete("/:id", asyncHandler(deleteDocumentHandler));
 
 export default router;

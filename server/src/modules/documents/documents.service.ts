@@ -1,6 +1,7 @@
 import { prisma } from "../../lib/prisma.js";
 
 import { LocalStorage } from "../../storage/local-storage.js";
+import { AppError } from "../../utils/app-error.js";
 
 const storage = new LocalStorage();
 
@@ -37,4 +38,28 @@ export async function getDocuments(knowledgeBaseId: string) {
       createdAt: "desc",
     },
   });
+}
+
+export async function deleteDocument(documentId: string) {
+  const document = await prisma.document.findUnique({
+    where: {
+      id: documentId,
+    },
+  });
+
+  if (!document) {
+    throw new AppError(404, "Document not found");
+  }
+
+  await storage.delete(document.storageKey);
+
+  await prisma.document.delete({
+    where: {
+      id: documentId,
+    },
+  });
+
+  return {
+    success: true,
+  };
 }
