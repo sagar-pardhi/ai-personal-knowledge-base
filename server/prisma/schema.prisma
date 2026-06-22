@@ -34,6 +34,40 @@ model KnowledgeBase {
   userId String
   user   User   @relation(fields: [userId], references: [id])
 
+  documents Document[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum DocumentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model Document {
+  id String @id @default(cuid())
+
+  name String
+
+  storageKey String
+
+  fileUrl String
+
+  fileType String
+
+  fileSize Int
+
+  status DocumentStatus @default(PENDING)
+
+  knowledgeBaseId String
+
+  knowledgeBase KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([knowledgeBaseId])
 }
