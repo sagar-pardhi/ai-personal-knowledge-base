@@ -40,6 +40,13 @@ model KnowledgeBase {
   updatedAt DateTime @updatedAt
 }
 
+enum DocumentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
 model Document {
   id String @id @default(cuid())
 
@@ -52,6 +59,8 @@ model Document {
   fileType String
 
   fileSize Int
+
+  status DocumentStatus @default(PENDING)
 
   knowledgeBaseId String
 
