@@ -13,20 +13,15 @@ export async function uploadDocument(
   const document = await prisma.document.create({
     data: {
       name: file.originalname,
-
       storageKey: uploaded.storageKey,
-
       fileUrl: uploaded.url,
-
       fileType: file.mimetype,
-
       fileSize: file.size,
-
       knowledgeBaseId,
     },
   });
 
-  processDocument(document.id);
+  processDocument(document.id).catch(console.error);
 
   return document;
 }

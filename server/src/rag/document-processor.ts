@@ -1,3 +1,5 @@
+import { createId } from "@paralleldrive/cuid2";
+
 import { prisma } from "../lib/prisma.js";
 
 import { getFileBuffer } from "../storage/r2-reader.js";
@@ -5,6 +7,16 @@ import { getFileBuffer } from "../storage/r2-reader.js";
 import { parseDocument } from "../parsers/parser.service.js";
 
 import { chunkText } from "./chunker.js";
+
+import { cleanText } from "./text-cleaner.js";
+
+import { chunkArray } from "../utils/chunk-array.js";
+
+import { createEmbeddings } from "./embeddings.service.js";
+
+import { saveChunks } from "./chroma.service.js";
+
+const EMBEDDING_BATCH_SIZE = 100;
 
 export async function processDocument(documentId: string) {
   const document = await prisma.document.findUnique({
@@ -14,10 +26,12 @@ export async function processDocument(documentId: string) {
   });
 
   if (!document) {
-    return;
+    throw new Error("Document not found");
   }
 
   try {
+    console.log(`Processing ${document.name}`);
+
     await prisma.document.update({
       where: {
         id: documentId,
@@ -29,19 +43,57 @@ export async function processDocument(documentId: string) {
 
     const buffer = await getFileBuffer(document.storageKey);
 
-    const text = await parseDocument(document.fileType, buffer);
+    const extractedText = await parseDocument(document.fileType, buffer);
 
-    const chunks = chunkText(text);
+    const cleanedText = cleanText(extractedText);
 
-    await prisma.documentChunk.createMany({
-      data: chunks.map((chunk, index) => ({
-        content: chunk,
+    const chunks = chunkText(cleanedText);
 
-        chunkIndex: index,
+    console.log(`Created ${chunks.length} chunks`);
 
-        documentId,
-      })),
-    });
+    const batches = chunkArray(chunks, EMBEDDING_BATCH_SIZE);
+
+    let chunkIndex = 0;
+
+    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+      const batch = batches[batchIndex];
+
+      console.log(`Embedding batch ${batchIndex + 1}/${batches.length}`);
+
+      const embeddings = await createEmbeddings(batch);
+
+      const postgresRows = [];
+
+      const chromaRows = [];
+
+      for (let i = 0; i < batch.length; i++) {
+        const id = createId();
+
+        postgresRows.push({
+          id,
+          content: batch[i],
+          chunkIndex,
+          documentId,
+        });
+
+        chromaRows.push({
+          id,
+          documentId,
+          content: batch[i],
+          embedding: embeddings[i],
+        });
+
+        chunkIndex++;
+      }
+
+      await prisma.documentChunk.createMany({
+        data: postgresRows,
+      });
+
+      await saveChunks(chromaRows);
+
+      console.log(`Finished batch ${batchIndex + 1}/${batches.length}`);
+    }
 
     await prisma.document.update({
       where: {
@@ -51,6 +103,8 @@ export async function processDocument(documentId: string) {
         status: "COMPLETED",
       },
     });
+
+    console.log(`Finished processing ${document.name}`);
   } catch (error) {
     console.error(error);
 
