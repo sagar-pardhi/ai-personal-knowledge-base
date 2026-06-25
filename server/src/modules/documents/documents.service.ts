@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
+import { processDocument } from "../../rag/document-processor.js";
 import { storage } from "../../storage/index.js";
 
 import { AppError } from "../../utils/app-error.js";
@@ -9,21 +10,20 @@ export async function uploadDocument(
 ) {
   const uploaded = await storage.upload(file);
 
-  return prisma.document.create({
+  const document = await prisma.document.create({
     data: {
       name: file.originalname,
-
       storageKey: uploaded.storageKey,
-
       fileUrl: uploaded.url,
-
       fileType: file.mimetype,
-
       fileSize: file.size,
-
       knowledgeBaseId,
     },
   });
+
+  processDocument(document.id).catch(console.error);
+
+  return document;
 }
 
 export async function getDocuments(knowledgeBaseId: string) {
