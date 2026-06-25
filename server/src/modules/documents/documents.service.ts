@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
+import { documentQueue } from "../../queues/document.queue.js";
 import { processDocument } from "../../rag/document-processor.js";
 import { storage } from "../../storage/index.js";
 
@@ -21,7 +22,9 @@ export async function uploadDocument(
     },
   });
 
-  processDocument(document.id).catch(console.error);
+  await documentQueue.add("process-document", {
+    documentId: document.id,
+  });
 
   return document;
 }
