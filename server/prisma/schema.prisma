@@ -42,7 +42,11 @@ model KnowledgeBase {
 
 enum DocumentStatus {
   PENDING
-  PROCESSING
+  DOWNLOADING
+  PARSING
+  CHUNKING
+  EMBEDDING
+  INDEXING
   COMPLETED
   FAILED
 }
@@ -61,6 +65,8 @@ model Document {
   fileSize Int
 
   status DocumentStatus @default(PENDING)
+
+  processingProgress Int @default(0)
 
   knowledgeBaseId String
 
