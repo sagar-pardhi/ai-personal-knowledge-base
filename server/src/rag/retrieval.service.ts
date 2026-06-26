@@ -86,3 +86,64 @@ export async function retrieveChunks(
     })
     .filter((chunk): chunk is RetrievedChunk => chunk !== null);
 }
+
+export async function expandChunks(
+  chunks: RetrievedChunk[],
+): Promise<RetrievedChunk[]> {
+  if (chunks.length === 0) {
+    return [];
+  }
+
+  const expanded = await prisma.documentChunk.findMany({
+    where: {
+      OR: chunks.flatMap((chunk) => [
+        {
+          documentId: chunk.documentId,
+          chunkIndex: chunk.chunkIndex - 1,
+        },
+        {
+          documentId: chunk.documentId,
+          chunkIndex: chunk.chunkIndex,
+        },
+        {
+          documentId: chunk.documentId,
+          chunkIndex: chunk.chunkIndex + 1,
+        },
+      ]),
+    },
+
+    include: {
+      document: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+
+    orderBy: [
+      {
+        documentId: "asc",
+      },
+      {
+        chunkIndex: "asc",
+      },
+    ],
+  });
+
+  const unique = new Map<string, RetrievedChunk>();
+
+  for (const chunk of expanded) {
+    unique.set(chunk.id, {
+      id: chunk.id,
+      content: chunk.content,
+      distance: 0,
+      documentId: chunk.document.id,
+      documentName: chunk.document.name,
+      knowledgeBaseId: chunks[0].knowledgeBaseId,
+      chunkIndex: chunk.chunkIndex,
+    });
+  }
+
+  return Array.from(unique.values());
+}

@@ -1,36 +1,47 @@
-import { RetrievedChunk } from "./retrieval.service.js";
+import { ContextBlock } from "./context-builder.js";
 
-export function buildPrompt(question: string, chunks: RetrievedChunk[]) {
-  const context = chunks
+export function buildPrompt(question: string, context: ContextBlock[]) {
+  const formattedContext = context
     .map(
-      (chunk) => `
-Document: ${chunk.documentName}
+      (block) => `
+Document: ${block.documentName}
 
-Chunk ${chunk.chunkIndex}
+Chunks: ${block.startChunk}-${block.endChunk}
 
-${chunk.content}
+${block.content}
 `,
     )
-    .join("\n\n---\n\n");
+    .join("\n\n----------------------\n\n");
 
   return `
 You are an AI assistant.
 
-Answer ONLY using the provided context.
+You answer ONLY using the supplied context.
 
-If the answer cannot be found,
-say:
+Rules:
 
-"I couldn't find that information in the uploaded documents."
+- Never invent information.
+- If the answer cannot be found in the context, say:
+  "I couldn't find that information in the uploaded documents."
 
-Context:
+- Be concise.
+- Use Markdown.
+- If multiple documents support the answer, combine the information.
 
-${context}
+=========================
 
-Question:
+CONTEXT
+
+${formattedContext}
+
+=========================
+
+QUESTION
 
 ${question}
 
-Answer:
+=========================
+
+ANSWER
 `;
 }
