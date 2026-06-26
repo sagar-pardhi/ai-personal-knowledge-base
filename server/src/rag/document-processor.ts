@@ -62,7 +62,7 @@ export async function processDocument(documentId: string) {
 
     await updateStatus("CHUNKING", ProcessingStage.CHUNKING);
 
-    const chunks = chunkText(cleanedText);
+    const chunks = await chunkText(cleanedText);
 
     console.log(`Created ${chunks.length} chunks`);
 

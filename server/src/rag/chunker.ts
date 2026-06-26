@@ -1,11 +1,12 @@
-export function chunkText(text: string) {
-  const chunkSize = 1000;
+import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 
-  const chunks: string[] = [];
+const splitter = new RecursiveCharacterTextSplitter({
+  chunkSize: 800,
+  chunkOverlap: 150,
 
-  for (let i = 0; i < text.length; i += chunkSize) {
-    chunks.push(text.slice(i, i + chunkSize));
-  }
+  separators: ["\n\n", "\n", ". ", "! ", "? ", " ", ""],
+});
 
-  return chunks;
+export async function chunkText(text: string): Promise<string[]> {
+  return splitter.splitText(text);
 }

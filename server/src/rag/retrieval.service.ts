@@ -1,14 +1,17 @@
-import { createQueryEmbedding } from "./query-embedding.js";
+import { prisma } from "../lib/prisma.js";
 
 import { getCollection } from "./chroma.service.js";
 
+import { createQueryEmbedding } from "./query-embedding.js";
+
 export interface RetrievedChunk {
   id: string;
-  documentId: string;
-  knowledgeBaseId: string;
-  chunkIndex: number;
   content: string;
   distance: number;
+  documentId: string;
+  documentName: string;
+  knowledgeBaseId: string;
+  chunkIndex: number;
 }
 
 export async function retrieveChunks(
@@ -32,23 +35,54 @@ export async function retrieveChunks(
 
   const ids = result.ids[0] ?? [];
 
-  const docs = result.documents?.[0] ?? [];
-
   const distances = result.distances?.[0] ?? [];
 
-  const metadata = result.metadatas?.[0] ?? [];
+  if (ids.length === 0) {
+    return [];
+  }
 
-  return ids.map((id, index) => ({
-    id,
+  const dbChunks = await prisma.documentChunk.findMany({
+    where: {
+      id: {
+        in: ids,
+      },
+    },
 
-    content: docs[index] as string,
+    include: {
+      document: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  });
 
-    distance: distances[index] ?? 0,
+  const chunkMap = new Map(dbChunks.map((chunk) => [chunk.id, chunk]));
 
-    documentId: metadata[index]?.documentId as string,
+  return ids
+    .map((id, index) => {
+      const chunk = chunkMap.get(id);
 
-    knowledgeBaseId: metadata[index]?.knowledgeBaseId as string,
+      if (!chunk) {
+        return null;
+      }
 
-    chunkIndex: metadata[index]?.chunkIndex as number,
-  }));
+      return {
+        id,
+
+        content: chunk.content,
+
+        distance: distances[index],
+
+        documentId: chunk.document.id,
+
+        documentName: chunk.document.name,
+
+        knowledgeBaseId,
+
+        chunkIndex: chunk.chunkIndex,
+      };
+    })
+    .filter((chunk): chunk is RetrievedChunk => chunk !== null);
 }
