@@ -1,13 +1,29 @@
-import { createNodeRedisClient, Queue } from "bullmq";
+import { Queue } from "bullmq";
+import { redisClient } from "./connection.js";
 
-import { client } from "./connection.js";
-
-export const redisClient = createNodeRedisClient(client);
-
-export interface DocumentJob {
+export interface DocumentJobData {
   documentId: string;
 }
 
-export const documentQueue = new Queue<DocumentJob>("document-processing", {
+export const documentQueue = new Queue<DocumentJobData>("document-processing", {
   connection: redisClient,
+
+  defaultJobOptions: {
+    attempts: 5,
+
+    backoff: {
+      type: "exponential",
+      delay: 5000,
+    },
+
+    removeOnComplete: 1000,
+
+    removeOnFail: 500,
+  },
 });
+
+export async function enqueueDocumentProcessing(documentId: string) {
+  return documentQueue.add("process-document", {
+    documentId,
+  });
+}
