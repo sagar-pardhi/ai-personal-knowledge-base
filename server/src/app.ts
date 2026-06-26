@@ -6,6 +6,7 @@ import authRoutes from "./modules/auth/auth.routes.js";
 import kbRoutes from "./modules/kb/kb.routes.js";
 import healthRoutes from "./routes/health.routes.js";
 import documentRoutes from "./modules/documents/documents.routes.js";
+import chatRoutes from "./modules/chat/chat.routes.js";
 
 import { errorHandler } from "./middleware/error.middleware.js";
 
@@ -24,6 +25,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/kbs", kbRoutes);
 
 app.use("/api/documents", documentRoutes);
+
+app.use("/api/chat", chatRoutes);
 
 app.use(errorHandler);
 

@@ -96,6 +96,8 @@ export async function processDocument(documentId: string) {
         chromaRows.push({
           id,
           documentId,
+          knowledgeBaseId: document.knowledgeBaseId,
+          chunkIndex,
           content: batch[i],
           embedding: embeddings[i],
         });
