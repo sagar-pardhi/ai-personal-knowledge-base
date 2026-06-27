@@ -1,4 +1,4 @@
-import { RetrievedChunk } from "./retrieval.service.js";
+import { ExpandedChunk } from "./context-expansion.service.js";
 
 export interface ContextBlock {
   documentId: string;
@@ -10,11 +10,12 @@ export interface ContextBlock {
   content: string;
 }
 
-export function buildContextBlocks(chunks: RetrievedChunk[]): ContextBlock[] {
-  if (chunks.length === 0) {
+export function buildContextBlocks(chunks: ExpandedChunk[]): ContextBlock[] {
+  if (!chunks.length) {
     return [];
   }
 
+  // Ensure deterministic ordering
   const sorted = [...chunks].sort((a, b) => {
     if (a.documentId === b.documentId) {
       return a.chunkIndex - b.chunkIndex;
@@ -36,11 +37,11 @@ export function buildContextBlocks(chunks: RetrievedChunk[]): ContextBlock[] {
   for (let i = 1; i < sorted.length; i++) {
     const chunk = sorted[i];
 
-    const isSameDocument = chunk.documentId === current.documentId;
+    const sameDocument = chunk.documentId === current.documentId;
 
-    const isNeighbor = chunk.chunkIndex === current.endChunk + 1;
+    const consecutive = chunk.chunkIndex === current.endChunk + 1;
 
-    if (isSameDocument && isNeighbor) {
+    if (sameDocument && consecutive) {
       current.endChunk = chunk.chunkIndex;
 
       current.content += "\n\n" + chunk.content;

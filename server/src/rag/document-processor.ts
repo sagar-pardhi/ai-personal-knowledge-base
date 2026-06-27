@@ -12,7 +12,7 @@ import { chunkText } from "./chunker.js";
 
 import { cleanText } from "./text-cleaner.js";
 
-import { createEmbeddings } from "./embeddings.service.js";
+import { createEmbeddings } from "../retrieval/embeddings.service.js";
 
 import { saveChunks } from "./chroma.service.js";
 
