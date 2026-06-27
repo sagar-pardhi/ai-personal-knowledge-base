@@ -7,6 +7,7 @@ import { expandSearchResults } from "./context-expansion.service.js";
 import { buildContextBlocks } from "./context-builder.js";
 
 import { buildMessages } from "./prompt-builder.js";
+import { buildSources } from "./source-builder.js";
 
 export interface ChatResponse {
   answer: string;
@@ -14,8 +15,8 @@ export interface ChatResponse {
   sources: {
     documentId: string;
     documentName: string;
-    startChunk: number;
-    endChunk: number;
+    chunks: number[];
+    relevanceScore: number;
   }[];
 }
 
@@ -55,14 +56,6 @@ export async function chatWithKnowledgeBase(
   return {
     answer: completion.choices[0].message.content ?? "",
 
-    sources: contextBlocks.map((block) => ({
-      documentId: block.documentId,
-
-      documentName: block.documentName,
-
-      startChunk: block.startChunk,
-
-      endChunk: block.endChunk,
-    })),
+    sources: buildSources(contextBlocks),
   };
 }
