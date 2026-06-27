@@ -4,6 +4,8 @@ import { getCollection } from "../rag/chroma.service.js";
 
 import { createQueryEmbedding } from "./query-embedding.js";
 
+import { MAX_VECTOR_DISTANCE, SEARCH_LIMIT } from "./constants.js";
+
 export interface SearchResult {
   id: string;
   content: string;
@@ -20,7 +22,7 @@ export interface SearchResult {
 export async function vectorSearch(
   knowledgeBaseId: string,
   question: string,
-  limit = 5,
+  limit = SEARCH_LIMIT,
 ): Promise<SearchResult[]> {
   const embedding = await createQueryEmbedding(question);
 
@@ -63,7 +65,7 @@ export async function vectorSearch(
 
   const chunkMap = new Map(chunks.map((chunk) => [chunk.id, chunk]));
 
-  return ids
+  const searchResults = ids
     .map((id, index) => {
       const chunk = chunkMap.get(id);
 
@@ -73,19 +75,17 @@ export async function vectorSearch(
 
       return {
         id,
-
         content: chunk.content,
-
         distance: distances[index],
-
         documentId: chunk.document.id,
-
         documentName: chunk.document.name,
-
         knowledgeBaseId,
-
         chunkIndex: chunk.chunkIndex,
       };
     })
     .filter((chunk): chunk is SearchResult => chunk !== null);
+
+  return searchResults.filter(
+    (result) => result.distance <= MAX_VECTOR_DISTANCE,
+  );
 }
