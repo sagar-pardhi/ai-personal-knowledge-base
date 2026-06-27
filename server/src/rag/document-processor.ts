@@ -12,7 +12,7 @@ import { chunkText } from "./chunker.js";
 
 import { cleanText } from "./text-cleaner.js";
 
-import { createEmbeddings } from "./embeddings.service.js";
+import { createEmbeddings } from "../retrieval/embeddings.service.js";
 
 import { saveChunks } from "./chroma.service.js";
 
@@ -62,7 +62,7 @@ export async function processDocument(documentId: string) {
 
     await updateStatus("CHUNKING", ProcessingStage.CHUNKING);
 
-    const chunks = chunkText(cleanedText);
+    const chunks = await chunkText(cleanedText);
 
     console.log(`Created ${chunks.length} chunks`);
 
@@ -96,6 +96,8 @@ export async function processDocument(documentId: string) {
         chromaRows.push({
           id,
           documentId,
+          knowledgeBaseId: document.knowledgeBaseId,
+          chunkIndex,
           content: batch[i],
           embedding: embeddings[i],
         });
