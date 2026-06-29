@@ -2,22 +2,14 @@ import { useCallback, useState } from "react";
 
 import { streamChat } from "../api/chat";
 
-import type { ChatSource } from "../types";
+import type { ChatMessage } from "../types";
 
 export function useChat(knowledgeBaseId: string) {
-  const [answer, setAnswer] = useState("");
-
-  const [sources, setSources] = useState<ChatSource[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   const [loading, setLoading] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
-
-  const reset = useCallback(() => {
-    setAnswer("");
-    setSources([]);
-    setError(null);
-  }, []);
 
   const askQuestion = useCallback(
     async (question: string) => {
@@ -25,45 +17,85 @@ export function useChat(knowledgeBaseId: string) {
         return;
       }
 
-      reset();
-
+      setError(null);
       setLoading(true);
 
-      await streamChat({
-        knowledgeBaseId,
+      const userMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: "user",
+        content: question,
+      };
 
-        question,
+      const assistantId = crypto.randomUUID();
 
-        onToken(token) {
-          setAnswer((prev) => prev + token);
-        },
+      const assistantMessage: ChatMessage = {
+        id: assistantId,
+        role: "assistant",
+        content: "",
+        sources: [],
+      };
 
-        onSources(receivedSources) {
-          setSources(receivedSources);
-        },
+      setMessages((prev) => [...prev, userMessage, assistantMessage]);
 
-        onDone() {
-          setLoading(false);
-        },
+      try {
+        await streamChat({
+          knowledgeBaseId,
+          question,
 
-        onError(message) {
-          setLoading(false);
+          onToken(token) {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantId
+                  ? {
+                      ...msg,
+                      content: msg.content + token,
+                    }
+                  : msg,
+              ),
+            );
+          },
 
-          setError(message);
-        },
-      });
+          onSources(sources) {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantId
+                  ? {
+                      ...msg,
+                      sources,
+                    }
+                  : msg,
+              ),
+            );
+          },
+
+          onDone() {
+            setLoading(false);
+          },
+
+          onError(message) {
+            setLoading(false);
+            setError(message);
+          },
+        });
+      } catch (err) {
+        setLoading(false);
+
+        setError(err instanceof Error ? err.message : "Unknown error");
+      }
     },
-    [knowledgeBaseId, reset],
+    [knowledgeBaseId],
   );
 
+  const clearChat = useCallback(() => {
+    setMessages([]);
+    setError(null);
+  }, []);
+
   return {
-    answer,
-    sources,
+    messages,
     loading,
     error,
-
     askQuestion,
-
-    reset,
+    clearChat,
   };
 }

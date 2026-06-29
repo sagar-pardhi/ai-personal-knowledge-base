@@ -1,13 +1,15 @@
 export interface ChatSource {
   documentId: string;
   documentName: string;
-  chunks: number[];
-  relevanceScore: number;
+  chunks?: number[];
+  relevanceScore?: number;
 }
 
-export interface ChatResponse {
-  answer: string;
-  sources: ChatSource[];
+export interface ChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  sources?: ChatSource[];
 }
 
 export interface ChatRequest {

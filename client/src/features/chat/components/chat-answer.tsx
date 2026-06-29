@@ -3,6 +3,7 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.min.css";
 import { Loader2, Bot } from "lucide-react";
+import { cleanMarkdown } from "@/lib/utils";
 
 interface ChatAnswerProps {
   answer: string;
@@ -11,10 +12,6 @@ interface ChatAnswerProps {
 }
 
 export function ChatAnswer({ answer, loading, error }: ChatAnswerProps) {
-  function cleanMarkdown(text: string) {
-    return text.replace(/^```(?:markdown)?\s*\n/i, "").replace(/\n```$/, "");
-  }
-
   if (error) {
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-600">
@@ -38,8 +35,6 @@ export function ChatAnswer({ answer, loading, error }: ChatAnswerProps) {
     );
   }
 
-  console.log(JSON.stringify(answer));
-
   return (
     <div className="rounded-lg border bg-card p-6">
       {loading && !answer && (
@@ -59,7 +54,12 @@ export function ChatAnswer({ answer, loading, error }: ChatAnswerProps) {
       overflow-x-auto
     "
         >
-          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>{cleanMarkdown(answer)}</ReactMarkdown>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeHighlight]}
+          >
+            {cleanMarkdown(answer)}
+          </ReactMarkdown>
         </article>
       </div>
     </div>

@@ -7,6 +7,7 @@ import { expandSearchResults } from "./context-expansion.service.js";
 import { buildContextBlocks } from "./context-builder.js";
 
 import { buildMessages } from "./prompt-builder.js";
+import { buildSources } from "./source-builder.js";
 
 export async function streamChat(knowledgeBaseId: string, question: string) {
   const search = await vectorSearch(knowledgeBaseId, question);
@@ -34,14 +35,6 @@ export async function streamChat(knowledgeBaseId: string, question: string) {
   return {
     stream,
 
-    sources: context.map((block) => ({
-      documentId: block.documentId,
-
-      documentName: block.documentName,
-
-      startChunk: block.chunks[0],
-
-      endChunk: block.chunks[block.chunks.length - 1],
-    })),
+    sources: buildSources(context),
   };
 }
