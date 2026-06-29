@@ -27,6 +27,8 @@ export async function streamChatHandler(req: Request, res: Response) {
   for await (const chunk of stream) {
     const token = chunk.choices[0]?.delta?.content;
 
+    console.log(token);
+
     if (!token) {
       continue;
     }

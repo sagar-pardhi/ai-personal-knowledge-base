@@ -39,9 +39,9 @@ export async function streamChat(knowledgeBaseId: string, question: string) {
 
       documentName: block.documentName,
 
-      startChunk: block.startChunk,
+      startChunk: block.chunks[0],
 
-      endChunk: block.endChunk,
+      endChunk: block.chunks[block.chunks.length - 1],
     })),
   };
 }
