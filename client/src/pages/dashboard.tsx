@@ -11,6 +11,7 @@ import { useDeleteKb, useKbs } from "@/hooks/use-kbs";
 
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
+import type { KnowledgeBase } from "@/types/kb";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -73,7 +74,7 @@ export default function DashboardPage() {
       )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {kbs?.map((kb) => (
+        {kbs?.map((kb: KnowledgeBase) => (
           <KbCard key={kb.id} kb={kb} onDelete={handleDelete} />
         ))}
       </div>

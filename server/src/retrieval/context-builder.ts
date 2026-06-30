@@ -2,10 +2,10 @@ import { ExpandedChunk } from "./context-expansion.service.js";
 
 export interface ContextBlock {
   documentId: string;
+
   documentName: string;
 
-  startChunk: number;
-  endChunk: number;
+  chunks: number[];
 
   content: string;
 }
@@ -29,8 +29,7 @@ export function buildContextBlocks(chunks: ExpandedChunk[]): ContextBlock[] {
   let current: ContextBlock = {
     documentId: sorted[0].documentId,
     documentName: sorted[0].documentName,
-    startChunk: sorted[0].chunkIndex,
-    endChunk: sorted[0].chunkIndex,
+    chunks: [sorted[0].chunkIndex],
     content: sorted[0].content,
   };
 
@@ -39,10 +38,11 @@ export function buildContextBlocks(chunks: ExpandedChunk[]): ContextBlock[] {
 
     const sameDocument = chunk.documentId === current.documentId;
 
-    const consecutive = chunk.chunkIndex === current.endChunk + 1;
+    const lastChunkIndex = current.chunks[current.chunks.length - 1];
+    const consecutive = chunk.chunkIndex === lastChunkIndex + 1;
 
     if (sameDocument && consecutive) {
-      current.endChunk = chunk.chunkIndex;
+      current.chunks.push(chunk.chunkIndex);
 
       current.content += "\n\n" + chunk.content;
     } else {
@@ -51,8 +51,7 @@ export function buildContextBlocks(chunks: ExpandedChunk[]): ContextBlock[] {
       current = {
         documentId: chunk.documentId,
         documentName: chunk.documentName,
-        startChunk: chunk.chunkIndex,
-        endChunk: chunk.chunkIndex,
+        chunks: [chunk.chunkIndex],
         content: chunk.content,
       };
     }

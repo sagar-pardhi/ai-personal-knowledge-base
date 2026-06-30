@@ -3,9 +3,10 @@ import { Request, Response } from "express";
 import { chatWithKnowledgeBase } from "../../retrieval/chat.service.js";
 
 import { streamChat } from "../../retrieval/chat-stream.service.js";
+import { chatSchema } from "./chat.schema.js";
 
 export async function chatHandler(req: Request, res: Response) {
-  const { knowledgeBaseId, question } = req.body;
+  const { knowledgeBaseId, question } = chatSchema.parse(req.body);
 
   const response = await chatWithKnowledgeBase(knowledgeBaseId, question);
 
@@ -13,7 +14,7 @@ export async function chatHandler(req: Request, res: Response) {
 }
 
 export async function streamChatHandler(req: Request, res: Response) {
-  const { knowledgeBaseId, question } = req.body;
+  const { knowledgeBaseId, question } = chatSchema.parse(req.body);
 
   const { stream, sources } = await streamChat(knowledgeBaseId, question);
 
@@ -25,6 +26,8 @@ export async function streamChatHandler(req: Request, res: Response) {
 
   for await (const chunk of stream) {
     const token = chunk.choices[0]?.delta?.content;
+
+    console.log(token);
 
     if (!token) {
       continue;
